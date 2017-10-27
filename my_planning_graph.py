@@ -105,7 +105,6 @@ class PgNode_s(PgNode):
 class PgNode_a(PgNode):
     """A-type (action) Planning Graph node - inherited from PgNode """
 
-
     def __init__(self, action: Action):
         """A-level Planning Graph node constructor
 
@@ -348,7 +347,6 @@ class PlanningGraph():
 
         self.s_levels.append((s_level_states))
 
-
     def update_a_mutex(self, nodeset):
         """ Determine and update sibling mutual exclusion for A-level nodes
 
@@ -521,7 +519,22 @@ class PlanningGraph():
         :return: bool
         """
         # TODO test for Inconsistent Support between nodes
-        return False
+        diff = node_s1.parents.difference(node_s2.parents)
+
+        mut = False
+        for a1 in node_s1.parents:
+            for a2 in node_s2.parents:
+                if a1.is_mutex(a2):
+                    mut = True
+
+        for a1 in node_s1.parents:
+            if a1 in node_s2.parents:
+                mut = False
+        for a2 in node_s2.parents:
+            if a2 in node_s1.parents:
+                mut = False
+
+        return mut
 
     def h_levelsum(self) -> int:
         """The sum of the level costs of the individual goals (admissible if goals independent)
@@ -531,4 +544,14 @@ class PlanningGraph():
         level_sum = 0
         # TODO implement
         # for each goal in the problem, determine the level cost, then add them together
+        for g in self.problem.goal:
+            g_end = False
+            for i in range(len(self.s_levels)):
+                for state in self.s_levels[i]:
+                    if state.is_pos and g == state.symbol:
+                        g_end = True
+                        level_sum += i
+                        break
+                if g_end:
+                    break
         return level_sum
